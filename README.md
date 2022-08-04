@@ -12,6 +12,8 @@ pascal voc 포멧을 coco 포멧으로 변환하기
 
 python ./coco_tools/voc2coco.py -n frut_nuts --dataset-path ../datasets/fruts_nuts_voc/ --img-path ../datasets/fruts_nuts_voc/voc/ -o ../datasets/fruts_nuts_voc/anno.json
 
+python ./coco_tools/voc2coco.py -n dic_1004 --dataset-path ../../datasets/cauda_test/dic_1004/ --img-path ../../datasets/cauda_test/dic_1004/voc/ -o ../../datasets/cauda_test/dic_1004/anno.json
+
 ```
 ## 2. merge coco files
 

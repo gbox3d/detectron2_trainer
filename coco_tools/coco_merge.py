@@ -1,4 +1,5 @@
 #%%
+from genericpath import exists
 import os
 import random
 from unicodedata import category
@@ -12,21 +13,14 @@ import json
 import datetime
 import yaml
 
-# import detectron2
-# from detectron2.structures import BoxMode
-
+print(f'start merge tool version 1.0')
 #%%
-# with open('./mergy.yaml', 'r') as f:
-#     cmdConfig = yaml.load(f,Loader=yaml.FullLoader)['merge']
-# json_files = cmdConfig['list']
-# save_name = cmdConfig['save_name']
-
 json_files = [
-    '/home/ubiqos/work/visionApp/annos/dic_1011/anno.json',
-    '/home/ubiqos/work/visionApp/annos/dic_hongy15/anno.json',
-    '/home/ubiqos/work/visionApp/annos/dic_sso3961/anno.json'
+    '../../../datasets/cauda_test/dic_1004/anno.json',
+    '../../../datasets/cauda_test/dic_1008/anno.json',
+    '../../../datasets/cauda_test/dic_1009/anno.json'
 ]
-save_name = './temp/mergy.json'
+save_name = './temp/merge.json'
 
 #%%
 import argparse
@@ -58,35 +52,57 @@ for json_file in json_files:
             images.extend(data['images'])
             meta_datas.extend(data['meta'])
             for cat in _categories: 
-                cat['name'] = cat['supercategory'] + '_' + cat['name']
+                if cat['supercategory'] != '':
+                    cat['name'] = cat['supercategory'] + '_' + cat['name']
                 categories.append(cat)
             annotation.extend(data['annotations'])
             
         else:
             last_cat_id = categories[-1]['id']
             
-            can_last = [meta_datas[-1]['id'],images[-1]['id'],annotation[-1]['id']]
+            # can_last = [meta_datas[-1]['id'],images[-1]['id'],annotation[-1]['id']]
             # print(can_last)
-            _last_id = max(can_last)
+            # _last_id = max(can_last)
             # print(f'last_id: {last_id}')
+            
+            _cat_conv_table = []
+            
             for cat in _categories: 
-                cat['id'] += last_cat_id
-                cat['name'] = cat['supercategory'] + '_' + cat['name']
-                categories.append(cat)
+                
+                if cat['supercategory'] != '':
+                    _super_category_name = cat['supercategory'] + '_' + cat['name']
+                else:
+                    _super_category_name = cat['name']
+                
+                if _super_category_name in [c['name'] for c in categories]:
+                    for _c in categories:
+                        if _c['name'] == _super_category_name:
+                            _cat_conv_table.append(cat['is'], _c['id'])
+                            break
+                    # _cat_conv_tabx/le.append([old_id,cat['id']])
+                else :
+                    old_id = cat['id']
+                    cat['id'] += last_cat_id
+                    cat['name'] = _super_category_name
+                    categories.append(cat)
+                    _cat_conv_table.append([old_id,cat['id']])
             
-            for meta in data['meta']:
-                meta['id'] += _last_id
-                meta_datas.append(meta)
+            meta_datas.extend(data['meta'])
+            # for meta in data['meta']:
+            #     meta_datas.append(meta)
             
-            for img in data['images']:
-                img['id'] += _last_id
-                img['meta_id'] += _last_id
-                images.append(img)
+            images.extend(data['images'])
+            # for img in data['images']:
+            #     images.append(img)
             
             for anno in data['annotations']:
-                anno['id'] += _last_id
-                anno['category_id'] += last_cat_id
-                anno['image_id'] += _last_id
+                # anno['id'] += _last_id
+                for i,j in _cat_conv_table:
+                    if anno['category_id'] == i:
+                        anno['category_id'] = j
+                        break;
+                # anno['category_id'] = _cat_conv_table[anno['category_id']-1][1]
+                # anno['image_id'] += _last_id
                 annotation.append(anno)
                 
                 # get last index
